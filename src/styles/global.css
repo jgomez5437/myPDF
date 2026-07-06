@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --ink:       #16161a;
+  --paper:     #ffffff;
+  --workspace: #e3e6ea;
+  --panel:     #1d1e24;
+  --panel-alt: #2a2b33;
+  --accent:    #4c5fd5;
+  --warm:      #f0a63d;
+  --danger:    #e15258;
+  --success:   #35b375;
+  --border:        #d3d6dc;
+  --text-muted:    #6b6e76;
+  --panel-line:    #34353f;
+  --accent-strong: #3a4bb8;
+  --warm-strong:   #d88e28;
+  --danger-strong: #c53f45;
+}
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #app {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--ink);
+    background: var(--workspace);
+    -webkit-font-smoothing: antialiased;
+  }
+}
