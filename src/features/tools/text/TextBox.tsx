@@ -22,6 +22,7 @@ type DragState = {
   moved: boolean
   historyPushed: boolean
   pageStackEl: HTMLElement
+  pointerId: number
 }
 
 let dragState: DragState | null = null
@@ -78,6 +79,9 @@ export function TextBox({ textBox: tb, pageStackEl, autoFocus }: Props) {
     if (!pageStackEl) return
 
     const startDoc = getDocCoords(e.nativeEvent, pageStackEl)
+    // Capture the pointer so the browser doesn't hand this touch gesture
+    // off to page scrolling/panning once the finger moves a few pixels.
+    e.currentTarget.setPointerCapture(e.pointerId)
     dragState = {
       tbId: tb.id,
       startX: tb.x,
@@ -87,9 +91,11 @@ export function TextBox({ textBox: tb, pageStackEl, autoFocus }: Props) {
       moved: false,
       historyPushed: false,
       pageStackEl,
+      pointerId: e.pointerId,
     }
     window.addEventListener('pointermove', onDragMove)
     window.addEventListener('pointerup', onDragEnd)
+    window.addEventListener('pointercancel', onDragEnd)
   }
 
   function handleDblClick(e: React.MouseEvent) {
@@ -144,7 +150,16 @@ export function TextBox({ textBox: tb, pageStackEl, autoFocus }: Props) {
         ${isEditing ? 'cursor-text' : 'cursor-move'}
         ${isSelected ? 'outline outline-2 outline-accent bg-accent/5 rounded' : ''}
       `}
-      style={{ left: tb.x, top: tb.y, width: tb.width, color: tb.color, fontSize: tb.fontSize }}
+      style={{
+        left: tb.x,
+        top: tb.y,
+        width: tb.width,
+        color: tb.color,
+        fontSize: tb.fontSize,
+        // 'none' while draggable so a touch-drag isn't hijacked into a page scroll;
+        // switched back to 'auto' during editing so text selection/caret gestures work.
+        touchAction: isEditing ? 'auto' : 'none',
+      }}
       onPointerDown={handlePointerDown}
       onDoubleClick={handleDblClick}
     >
@@ -167,9 +182,9 @@ export function TextBox({ textBox: tb, pageStackEl, autoFocus }: Props) {
       />
       {isSelected && (
         <button
-          className="absolute -top-2.5 -right-2.5 w-5 h-5 rounded-full bg-danger text-white
-                     text-xs flex items-center justify-center border-none cursor-pointer leading-none
-                     opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute -top-3 -right-3 w-7 h-7 rounded-full bg-danger text-white
+                     text-sm flex items-center justify-center border-none cursor-pointer leading-none"
+          style={{ touchAction: 'manipulation' }}
           title="Delete text box"
           onPointerDown={handleDeletePointerDown}
           onClick={handleDeleteClick}
@@ -182,7 +197,7 @@ export function TextBox({ textBox: tb, pageStackEl, autoFocus }: Props) {
 }
 
 function onDragMove(evt: PointerEvent) {
-  if (!dragState) return
+  if (!dragState || evt.pointerId !== dragState.pointerId) return
   const { x, y } = getDocCoords(evt, dragState.pageStackEl)
   if (!dragState.historyPushed) {
     pushHistory()
@@ -201,9 +216,11 @@ function onDragMove(evt: PointerEvent) {
   })
 }
 
-function onDragEnd() {
+function onDragEnd(evt: PointerEvent) {
+  if (!dragState || evt.pointerId !== dragState.pointerId) return
   window.removeEventListener('pointermove', onDragMove)
   window.removeEventListener('pointerup', onDragEnd)
-  if (dragState?.moved) scheduleAutosave()
+  window.removeEventListener('pointercancel', onDragEnd)
+  if (dragState.moved) scheduleAutosave()
   dragState = null
 }

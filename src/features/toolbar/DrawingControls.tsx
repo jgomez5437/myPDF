@@ -52,6 +52,8 @@ export function DrawingControls() {
       if (tb) {
         tb.color = v
         appStore.updatePage(appStore.currentPage, { ...pd })
+        // Remember as the default so the next new text box uses it too.
+        setTextDefaultColor(v)
       }
     }
   }
@@ -73,6 +75,8 @@ export function DrawingControls() {
       if (tb) {
         tb.fontSize = v
         appStore.updatePage(appStore.currentPage, { ...pd })
+        // Remember as the default so the next new text box uses it too.
+        setCurrentFontSize(v)
       }
     }
   }
